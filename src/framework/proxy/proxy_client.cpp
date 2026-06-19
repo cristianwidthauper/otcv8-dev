@@ -106,7 +106,7 @@ void Proxy::connect()
             }
             endpoint = boost::asio::ip::tcp::endpoint(address, self->m_port);
         } else {
-            endpoint = boost::asio::ip::tcp::endpoint(*results);
+            endpoint = results.begin()->endpoint();
             endpoint.port(self->m_port);
         }
         self->m_resolvedIp = endpoint.address().to_string();
@@ -323,7 +323,7 @@ void Session::terminate(boost::system::error_code ec)
             boost::system::error_code ecc;
             m_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ecc);
             m_socket.close(ecc);
-            m_timer.cancel(ecc);
+            m_timer.cancel();
         } else if (m_disconnectCallback) {
             m_disconnectCallback(ec);
         }
