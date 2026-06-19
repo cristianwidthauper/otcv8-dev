@@ -37,7 +37,7 @@ void Proxy::terminate()
         g_proxies.erase(self);
         disconnect();
         boost::system::error_code ec;
-        m_timer.cancel(ec);
+        m_timer.cancel();
     });
 }
 
