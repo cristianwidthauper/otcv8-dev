@@ -127,7 +127,7 @@ bool ResourceManager::launchCorrect(const std::string& product, const std::strin
     if (binary == m_binaryPath)
         return false;
 
-    return true; // Samera: validacao por launch desativada (boost::process v1 fora)
+    return g_platform.spawnProcess(binary.string(), {});
 #else
     return false;
 #endif
