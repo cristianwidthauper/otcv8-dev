@@ -28,10 +28,7 @@
         advapi32.lib;
     		Ole32.lib;
         psapi.lib;
-        bcrypt.lib;		
-        ucrt.lib;
-        vcruntime.lib;
-        msvcrt.lib;
+        bcrypt.lib;
         mincore_downlevel.lib;
         mincore.lib;    
     </OTCLIENT_LIBDEPS>
@@ -59,7 +56,6 @@
     <Link>
       <AdditionalDependencies>$(OTCLIENT_LIBDEPS)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
       <LargeAddressAware>true</LargeAddressAware>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
