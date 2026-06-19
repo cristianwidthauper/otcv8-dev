@@ -75,7 +75,7 @@ void Proxy::check(const boost::system::error_code& ec)
             ping();
         }
     }
-    m_timer.expires_from_now(std::chrono::milliseconds(CHECK_INTERVAL));
+    m_timer.expires_after(std::chrono::milliseconds(CHECK_INTERVAL));
     m_timer.async_wait(std::bind(&Proxy::check, shared_from_this(), std::placeholders::_1));
 }
 
@@ -348,7 +348,7 @@ void Session::check(const boost::system::error_code& ec)
 
     selectProxies();
 
-    m_timer.expires_from_now(std::chrono::milliseconds(CHECK_INTERVAL));
+    m_timer.expires_after(std::chrono::milliseconds(CHECK_INTERVAL));
     m_timer.async_wait(std::bind(&Session::check, shared_from_this(), std::placeholders::_1));
 }
 
