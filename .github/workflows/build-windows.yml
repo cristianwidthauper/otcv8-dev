@@ -25,6 +25,7 @@ jobs:
         vcpkgArguments: >
           boost-iostreams boost-asio boost-beast boost-system boost-variant boost-lockfree boost-process boost-program-options boost-uuid boost-filesystem
           luajit glew physfs openal-soft libogg libvorbis zlib libzip bzip2 openssl
+          --overlay-ports=${{ github.workspace }}/vcpkg-overlay-ports
     - name: Integrate vcpkg
       run: ${{ runner.workspace }}/vcpkg/vcpkg integrate install
     - name: Compile otclient_gl

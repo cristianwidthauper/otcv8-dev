@@ -1,0 +1,34 @@
+{
+  "name": "otclient",
+  "version-string": "samera",
+  "builtin-baseline": "f3e10653cc27d62a37a3763cd84b38bca07c6075",
+  "dependencies": [
+    "boost-iostreams",
+    "boost-asio",
+    "boost-beast",
+    "boost-system",
+    "boost-variant",
+    "boost-lockfree",
+    "boost-process",
+    "boost-program-options",
+    "boost-uuid",
+    "boost-filesystem",
+    "luajit",
+    "glew",
+    "physfs",
+    "openal-soft",
+    "libogg",
+    "libvorbis",
+    "zlib",
+    "libzip",
+    "bzip2",
+    "openssl"
+  ],
+  "overrides": [
+    {
+      "name": "luajit",
+      "version-date": "2023-01-04",
+      "port-version": 7
+    }
+  ]
+}
