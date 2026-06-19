@@ -58,6 +58,8 @@
       <AdditionalDependencies>$(OTCLIENT_LIBDEPS)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <LargeAddressAware>true</LargeAddressAware>
+      <GenerateMapFile>true</GenerateMapFile>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <SubSystem>Windows</SubSystem>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
