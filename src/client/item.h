@@ -98,6 +98,10 @@ public:
     int getCountOrSubType() { return m_countOrSubType; }
     int getSubType();
     int getCount();
+    // Samera: duracao nativa dos rings que decaem (impl em item.cpp pq usa g_clock)
+    void setDuration(int ms);
+    int getDuration();
+    bool hasDuration() { return m_hasDuration; }
     uint32 getId() { return m_clientId; }
     uint16 getClientId() { return m_clientId; }
     uint16 getServerId() { return m_serverId; }
@@ -178,6 +182,9 @@ private:
     uint32 m_quickLootFlags;
     uint8 m_phase;
     ticks_t m_lastPhase;
+    // Samera: duracao nativa (rings que decaem)
+    ticks_t m_durationEnd = 0;
+    bool m_hasDuration = false;
 
     stdext::packed_storage<uint16> m_customAttribs;
 };

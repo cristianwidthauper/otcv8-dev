@@ -59,6 +59,14 @@ void UIItem::drawSelf(Fw::DrawPane drawPane)
             g_drawQueue->addText(m_font, m_countText, Rect(m_rect.topLeft(), m_rect.bottomRight() - Point(3, 0)), Fw::AlignBottomRight, Color(231, 231, 231));
         }
 
+        // Samera: countdown NATIVO dos rings que decaem (mm:ss), descendo via g_clock.
+        if(m_font && m_showCount && m_item->hasDuration()) {
+            int secs = m_item->getDuration() / 1000;
+            int mm = secs / 60, ss = secs % 60;
+            std::string durText = std::to_string(mm) + ":" + (ss < 10 ? "0" : "") + std::to_string(ss);
+            g_drawQueue->addText(m_font, durText, Rect(m_rect.topLeft(), m_rect.bottomRight() - Point(3, 0)), Fw::AlignBottomRight, Color(231, 231, 231));
+        }
+
         if (m_showId) {
             g_drawQueue->addText(m_font, std::to_string(m_item->getServerId()), m_rect, Fw::AlignBottomRight, Color(231, 231, 231));
         }

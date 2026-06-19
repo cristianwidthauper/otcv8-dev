@@ -285,6 +285,22 @@ int Item::getCount()
     return 1;
 }
 
+// Samera: duracao nativa dos rings que decaem. setDuration recebe ms restantes (do server);
+// getDuration interpola pra baixo via g_clock (countdown suave entre updates).
+void Item::setDuration(int ms)
+{
+    m_durationEnd = g_clock.millis() + (ticks_t)(ms > 0 ? ms : 0);
+    m_hasDuration = true;
+}
+
+int Item::getDuration()
+{
+    if(!m_hasDuration)
+        return 0;
+    ticks_t left = m_durationEnd - g_clock.millis();
+    return left > 0 ? (int)left : 0;
+}
+
 bool Item::isMoveable()
 {
     return !rawGetThingType()->isNotMoveable();

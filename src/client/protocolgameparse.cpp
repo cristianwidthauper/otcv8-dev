@@ -3605,6 +3605,15 @@ ItemPtr ProtocolGame::getItem(const InputMessagePtr& msg, int id, bool hasDescri
         }
     }
 
+    // Samera: duracao NATIVA dos rings que decaem (feature GameItemDuration). Le U32 = ms restantes.
+    // Lista FIXA identica ao server (networkmessage.cpp addItem). Usa getId() (client id == server id; este client nao carrega OTB).
+    if (g_game.getFeature(Otc::GameItemDuration)) {
+        int cid = item->getId();
+        if (cid == 3047 || cid == 3086 || cid == 3087 || cid == 3088 || cid == 3089 || cid == 3090 || cid == 3094 || cid == 3095 || cid == 3096 || cid == 3099 || cid == 3100) {
+            item->setDuration(msg->getU32());
+        }
+    }
+
     if (g_game.getFeature(Otc::GameItemAnimationPhase)) {
         if (item->getAnimationPhases() > 1) {
             // 0x00 => automatic phase
