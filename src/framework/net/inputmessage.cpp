@@ -21,6 +21,7 @@
  */
 
 #include "inputmessage.h"
+#include <climits>
 #include <framework/util/crypt.h>
 #include <client/map.h>
 
