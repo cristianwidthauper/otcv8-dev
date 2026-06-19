@@ -30,6 +30,8 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <climits>
+
 #define LUA_LIB
 
 extern "C" {
@@ -130,7 +132,6 @@ union luai_Cast2 { double l_d; LUAI_INT32 l_p[2]; };
 /* the following definition assures proper modulo behavior */
 #if defined(LUA_NUMBER_DOUBLE)
 #include <math.h>
-#include <limits.h>
 #define SUPUNSIGNED     ((lua_Number)(~(lua_Unsigned)0) + 1)
 #define lua_number2unsigned(i,n)  \
         ((i)=(lua_Unsigned)((n) - floor((n)/SUPUNSIGNED)*SUPUNSIGNED))
