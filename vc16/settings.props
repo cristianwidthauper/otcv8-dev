@@ -19,11 +19,7 @@
     </PREPROCESSOR_DEFS>
     
     <OTCLIENT_LIBDEPS>
-        zlib.lib;
-        libssl.lib;
-        physfs-static.lib;
         winmm.lib;
-        lua51.lib;
         dbghelp.lib;
         kernel32.lib;
         user32.lib;
