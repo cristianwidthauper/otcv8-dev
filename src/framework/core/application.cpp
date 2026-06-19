@@ -182,7 +182,10 @@ void Application::close()
 void Application::restart()
 {
 #if not(defined(ANDROID) || defined(FREE_VERSION))
-    g_logger.info("Application::restart(): relaunch desativado (boost novo). Reabra o client.");
+    if (!g_platform.spawnProcess(g_resources.getBinaryName(), {})) {
+        g_logger.fatal("Updater restart error. Please restart application");
+    }
+    quick_exit();
 #else
     exit();
 #endif
@@ -191,8 +194,10 @@ void Application::restart()
 void Application::restartArgs(const std::vector<std::string>& args)
 {
 #if not(defined(ANDROID) || defined(FREE_VERSION))
-    (void)args;
-    g_logger.info("Application::restartArgs(): relaunch desativado (boost novo). Reabra o client.");
+    if (!g_platform.spawnProcess(g_resources.getBinaryName(), args)) {
+        g_logger.fatal("Updater restart error. Please restart application");
+    }
+    quick_exit();
 #else
     exit();
 #endif
