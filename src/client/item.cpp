@@ -287,16 +287,22 @@ int Item::getCount()
 
 // Samera: duracao nativa dos rings que decaem. setDuration recebe ms restantes (do server);
 // getDuration interpola pra baixo via g_clock (countdown suave entre updates).
-void Item::setDuration(int ms)
+void Item::setDuration(int ms, bool isStatic)
 {
-    m_durationEnd = g_clock.millis() + (ticks_t)(ms > 0 ? ms : 0);
     m_hasDuration = true;
+    m_durationStatic = isStatic;
+    if(isStatic)
+        m_durationMs = (ms > 0 ? ms : 0);          // mochila: tempo estatico (nao decai)
+    else
+        m_durationEnd = g_clock.millis() + (ticks_t)(ms > 0 ? ms : 0);  // equipado: countdown
 }
 
 int Item::getDuration()
 {
     if(!m_hasDuration)
         return 0;
+    if(m_durationStatic)
+        return m_durationMs;
     ticks_t left = m_durationEnd - g_clock.millis();
     return left > 0 ? (int)left : 0;
 }

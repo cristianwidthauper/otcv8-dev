@@ -99,7 +99,7 @@ public:
     int getSubType();
     int getCount();
     // Samera: duracao nativa dos rings que decaem (impl em item.cpp pq usa g_clock)
-    void setDuration(int ms);
+    void setDuration(int ms, bool isStatic = false);
     int getDuration();
     bool hasDuration() { return m_hasDuration; }
     uint32 getId() { return m_clientId; }
@@ -185,6 +185,8 @@ private:
     // Samera: duracao nativa (rings que decaem)
     ticks_t m_durationEnd = 0;
     bool m_hasDuration = false;
+    int m_durationMs = 0;
+    bool m_durationStatic = false;
 
     stdext::packed_storage<uint16> m_customAttribs;
 };

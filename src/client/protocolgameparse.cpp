@@ -3610,8 +3610,10 @@ ItemPtr ProtocolGame::getItem(const InputMessagePtr& msg, int id, bool hasDescri
     // do data.zip nao carregar o features.lua). Usa getId() (client id == server id; este client nao carrega OTB).
     {
         int cid = item->getId();
-        if (cid == 3047 || cid == 3086 || cid == 3087 || cid == 3088 || cid == 3089 || cid == 3090 || cid == 3094 || cid == 3095 || cid == 3096 || cid == 3099 || cid == 3100) {
-            item->setDuration(msg->getU32());
+        bool durAtivo = (cid == 3047 || cid == 3086 || cid == 3087 || cid == 3088 || cid == 3089 || cid == 3090 || cid == 3094 || cid == 3095 || cid == 3096 || cid == 3099 || cid == 3100);   // equipados: decaem
+        bool durInativo = (cid == 3046 || cid == 3049 || cid == 3050 || cid == 3051 || cid == 3052 || cid == 3053 || cid == 3091 || cid == 3092 || cid == 3093 || cid == 3097 || cid == 3098); // mochila: estatico
+        if (durAtivo || durInativo) {
+            item->setDuration(msg->getU32(), durInativo);
         }
     }
 
