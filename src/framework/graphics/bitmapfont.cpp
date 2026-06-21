@@ -29,6 +29,7 @@
 #include <framework/core/eventdispatcher.h>
 #include <framework/otml/otml.h>
 #include <framework/util/extras.h>
+#include <framework/stdext/stdext.h>
 
 void BitmapFont::load(const OTMLNodePtr& fontNode)
 {
@@ -103,11 +104,14 @@ void BitmapFont::drawColoredText(const std::string& text, const Rect& screenCoor
     g_drawQueue->addColoredText(static_self_cast<BitmapFont>(), text, screenCoords, align, colors, shadow);
 }
 
-void BitmapFont::calculateDrawTextCoords(CoordsBuffer& coordsBuffer, const std::string& text, const Rect& screenCoords, Fw::AlignmentFlag align)
+void BitmapFont::calculateDrawTextCoords(CoordsBuffer& coordsBuffer, const std::string& rawText, const Rect& screenCoords, Fw::AlignmentFlag align)
 {
     // prevent glitches from invalid rects
     if (!screenCoords.isValid() || !m_texture)
         return;
+
+    // Samera: normaliza UTF-8 -> Latin-1 p/ o lookup de glyph byte-a-byte (idempotente via guard)
+    std::string text = stdext::is_valid_utf8(rawText) ? stdext::utf8_to_latin1(rawText) : rawText;
 
     int textLenght = text.length();
 
@@ -179,13 +183,16 @@ void BitmapFont::calculateDrawTextCoords(CoordsBuffer& coordsBuffer, const std::
     }
 }
 
-const std::vector<Point>& BitmapFont::calculateGlyphsPositions(const std::string& text,
+const std::vector<Point>& BitmapFont::calculateGlyphsPositions(const std::string& rawText,
                                                          Fw::AlignmentFlag align,
                                                          Size *textBoxSize)
 {
     // for performance reasons we use statics vectors that are allocated on demand
     static thread_local std::vector<Point> glyphsPositions(1);
     static thread_local std::vector<int> lineWidths(1);
+
+    // Samera: normaliza UTF-8 -> Latin-1 p/ o lookup de glyph byte-a-byte (idempotente via guard)
+    std::string text = stdext::is_valid_utf8(rawText) ? stdext::utf8_to_latin1(rawText) : rawText;
 
     int textLength = text.length();
     int maxLineWidth = 0;
@@ -270,8 +277,11 @@ Size BitmapFont::calculateTextRectSize(const std::string& text)
     return size;
 }
 
-std::string BitmapFont::wrapText(const std::string& text, int maxWidth, std::vector<std::pair<int, Color>>* colors)
+std::string BitmapFont::wrapText(const std::string& rawText, int maxWidth, std::vector<std::pair<int, Color>>* colors)
 {
+    // Samera: normaliza UTF-8 -> Latin-1 p/ o lookup de glyph byte-a-byte (idempotente via guard)
+    std::string text = stdext::is_valid_utf8(rawText) ? stdext::utf8_to_latin1(rawText) : rawText;
+
     std::string outText;
     outText.reserve(text.size() * 2); // string append optimization
 

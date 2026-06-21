@@ -24,6 +24,7 @@
 #include "painter.h"
 #include "fontmanager.h"
 #include "bitmapfont.h"
+#include <framework/stdext/stdext.h>
 
 CachedText::CachedText()
 {
@@ -55,9 +56,12 @@ void CachedText::setColoredText(const std::vector<std::string>& texts)
     for (size_t i = 0, p = 0; i < texts.size() - 1; i += 2) {
         Color c(Color::white);
         stdext::cast<Color>(texts[i + 1], c);
-        m_text += texts[i];
-        for (auto& c : texts[i]) {
-            if ((uint8)c >= 32)
+        // Samera: normaliza o fragmento UTF-8 -> Latin-1 UMA vez, e conta a fronteira de cor
+        // sobre os MESMOS bytes convertidos (senão as cores deslizam a partir do 1o acento)
+        std::string frag = stdext::is_valid_utf8(texts[i]) ? stdext::utf8_to_latin1(texts[i]) : texts[i];
+        m_text += frag;
+        for (auto& ch : frag) {
+            if ((uint8)ch >= 32)
                 p += 1;
         }
         m_textColors.push_back(std::make_pair(p, c));
