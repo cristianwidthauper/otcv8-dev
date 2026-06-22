@@ -87,11 +87,16 @@ void Item::draw(const Point& dest, bool animate, LightView* lightView)
     if (m_color != Color::alpha)
         color = m_color;
     size_t drawQueueSize = g_drawQueue->size();
-    if (!m_shader.empty()) {
-        rawGetThingType()->drawWithShader(dest, 0, xPattern, yPattern, zPattern, animationPhase, m_shader, color, lightView);
-    }
-    else {
-        rawGetThingType()->draw(dest, 0, xPattern, yPattern, zPattern, animationPhase, color, lightView);
+    // Samera: desenha TODAS as layers do item (vanilla desenhava so a layer 0) -> itens multi-layer
+    auto tt = rawGetThingType();
+    int itemLayers = tt->getLayers(); if (itemLayers < 1) itemLayers = 1;
+    for (int l = 0; l < itemLayers; ++l) {
+        if (!m_shader.empty()) {
+            tt->drawWithShader(dest, l, xPattern, yPattern, zPattern, animationPhase, m_shader, color, lightView);
+        }
+        else {
+            tt->draw(dest, l, xPattern, yPattern, zPattern, animationPhase, color, lightView);
+        }
     }
     if (m_marked) {
         g_drawQueue->setMark(drawQueueSize, updatedMarkedColor());
@@ -114,11 +119,16 @@ void Item::draw(const Rect& dest, bool animate)
     if (m_color != Color::alpha)
         color = m_color;
 
-    if (!m_shader.empty()) {
-        rawGetThingType()->drawWithShader(dest, 0, xPattern, yPattern, zPattern, animationPhase, m_shader, color);
-    }
-    else {
-        rawGetThingType()->draw(dest, 0, xPattern, yPattern, zPattern, animationPhase, color);
+    // Samera: desenha TODAS as layers do item (vanilla desenhava so a layer 0) -> itens multi-layer
+    auto tt = rawGetThingType();
+    int itemLayers = tt->getLayers(); if (itemLayers < 1) itemLayers = 1;
+    for (int l = 0; l < itemLayers; ++l) {
+        if (!m_shader.empty()) {
+            tt->drawWithShader(dest, l, xPattern, yPattern, zPattern, animationPhase, m_shader, color);
+        }
+        else {
+            tt->draw(dest, l, xPattern, yPattern, zPattern, animationPhase, color);
+        }
     }
 }
 
