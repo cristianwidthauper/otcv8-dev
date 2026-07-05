@@ -103,6 +103,11 @@ void Outfit::draw(Point dest, Otc::Direction direction, uint walkAnimationPhase,
             if (!type->isAnimateAlways() && ui) {
                 animationPhase += 1;
             }
+            // Samera: trava a fase no maximo valido. Sem isso, outfits com != 3 fases
+            // (ex 2/8/9) chegavam a fase == getAnimationPhases() (fora do range) na previa
+            // do Set Outfit -> ThingType::draw retorna null -> 1 frame invisivel/ciclo (pisca).
+            if (animationPhase >= type->getAnimationPhases())
+                animationPhase = type->getAnimationPhases() - 1;
         }
         if (g_game.getFeature(Otc::GameWingOffset) && m_wings) {
             wingBounce();
