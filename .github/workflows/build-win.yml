@@ -49,6 +49,9 @@ jobs:
         if (-not $pc) { Write-Error "pkg-config nao encontrado apos o choco install"; exit 1 }
         Write-Host "pkg-config em: $pc"
         "PKG_CONFIG=$pc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        # No Windows o vcpkg builda os ports num ambiente LIMPO/isolado (docs/users/triplets.md),
+        # entao o PKG_CONFIG do runner NAO chega no portfile. VCPKG_KEEP_ENV_VARS repassa ele.
+        "VCPKG_KEEP_ENV_VARS=PKG_CONFIG" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
     - name: Run vcpkg
       uses: lukka/run-vcpkg@v7
