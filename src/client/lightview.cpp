@@ -24,16 +24,17 @@
 #include "spritemanager.h"
 #include <framework/graphics/painter.h>
 
-void LightView::addLight(const Point& pos, uint8_t color, uint8_t intensity)
+void LightView::addLight(const Point& pos, uint8_t color, uint8_t intensity, bool immune)
 {
     if (!m_lights.empty()) {
         Light& prevLight = m_lights.back();
         if (prevLight.pos == pos && prevLight.color == color) {
             prevLight.intensity = std::max(prevLight.intensity, intensity);
+            prevLight.immune = prevLight.immune || immune; // Samera: mantem a imunidade ao mesclar
             return;
         }
     }
-    m_lights.push_back(Light{ pos, color, intensity });
+    m_lights.push_back(Light{ pos, color, intensity, immune });
 }
 
 void LightView::setFieldBrightness(const Point& pos, size_t start, uint8_t color)
@@ -56,9 +57,32 @@ void LightView::draw() // render thread
             Point pos(x * g_sprites.spriteSize() + g_sprites.spriteSize() / 2, y * g_sprites.spriteSize() + g_sprites.spriteSize() / 2);
             int index = (y * m_mapSize.width() + x);
             int colorIndex = index * 4;
-            buffer[colorIndex] = m_globalLight.r();
-            buffer[colorIndex + 1] = m_globalLight.g();
-            buffer[colorIndex + 2] = m_globalLight.b();
+
+            // Samera 2026-07-14: AURA DE ESCURIDAO (boss nv3). Calcula o "quanto este tile esta no breu"
+            // (0 = normal, 1 = escuridao total) pegando a fonte mais forte, com falloff smoothstep.
+            // 'keep' multiplica TANTO o ambiente QUANTO cada luz normal -> tocha/utevo morrem de verdade
+            // perto do boss, com degrade natural. MAX_DARK deixa um residuo pra nao ficar cego 100%.
+            float keep = 1.0f;
+            if (!m_darks.empty()) {
+                static const float MAX_DARK = 0.92f;
+                float dark = 0.0f;
+                for (const DarkSource& d : m_darks) {
+                    if (d.radius <= 0.0f) continue;
+                    float dx = (float)(pos.x - d.pos.x), dy = (float)(pos.y - d.pos.y);
+                    float dist = std::sqrt(dx * dx + dy * dy) / (float)g_sprites.spriteSize(); // em tiles
+                    float f = 1.0f - (dist / d.radius);
+                    if (f > dark) dark = f;
+                }
+                if (dark > 0.0f) {
+                    if (dark > 1.0f) dark = 1.0f;
+                    dark = dark * dark * (3.0f - 2.0f * dark); // smoothstep -> borda suave
+                    keep = 1.0f - dark * MAX_DARK;
+                }
+            }
+
+            buffer[colorIndex] = (uint8_t)(m_globalLight.r() * keep);
+            buffer[colorIndex + 1] = (uint8_t)(m_globalLight.g() * keep);
+            buffer[colorIndex + 2] = (uint8_t)(m_globalLight.b() * keep);
             buffer[colorIndex + 3] = 255; // alpha channel
             for (size_t i = m_tiles[index].start; i < m_lights.size(); ++i) {
                 Light& light = m_lights[i];
@@ -68,6 +92,8 @@ void LightView::draw() // render thread
                 float intensity = (-distance + light.intensity) * 0.2f;
                 if (intensity < 0.01f) continue;
                 if (intensity > 1.0f) intensity = 1.0f;
+                if (!light.immune) intensity *= keep; // Samera: luz normal e' anulada pela aura; a do boss nao
+                if (intensity < 0.01f) continue;
                 Color lightColor = Color::from8bit(light.color) * intensity;
                 buffer[colorIndex] = std::max<int>(buffer[colorIndex], lightColor.r());
                 buffer[colorIndex + 1] = std::max<int>(buffer[colorIndex + 1], lightColor.g());

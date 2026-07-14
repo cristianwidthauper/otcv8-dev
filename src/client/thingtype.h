@@ -156,6 +156,9 @@ struct Light {
     Point pos;
     uint8_t color = 215;
     uint8_t intensity = 0;
+    // Samera 2026-07-14: luz IMUNE a aura de escuridao (ex: o brilho do proprio boss nv3,
+    // que precisa atravessar o breu que ele mesmo emana). Default false = luz normal, e' cortada.
+    bool immune = false;
 };
 
 struct DrawOutfitParams {

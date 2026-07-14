@@ -198,6 +198,12 @@ public:
     void setProgressBar(uint32 duration, bool ltr);
     void updateProgressBar(uint32 duration, bool ltr);
 
+    // Samera 2026-07-14: AURA DE ESCURIDAO (boss nv3). raio em TILES; 0 = desligado.
+    // Quando > 0, a criatura emana breu real no LightView: o ambiente escurece e as luzes
+    // dos outros (tocha/utevo/itens) sao ANULADAS no raio. A luz da propria criatura e' imune.
+    void setDarknessAura(float radiusTiles) { m_darknessAura = radiusTiles; }
+    float getDarknessAura() { return m_darknessAura; }
+
 protected:
     virtual void updateWalkAnimation(uint8 totalPixelsWalked);
     virtual void updateWalkOffset(uint8 totalPixelsWalked, bool inNextFrame = false);
@@ -289,6 +295,8 @@ protected:
     uint8 m_progressBarPercent;
     ScheduledEventPtr m_progressBarUpdateEvent;
     Timer m_progressBarTimer;
+
+    float m_darknessAura = 0.f; // Samera 2026-07-14: raio (tiles) da aura de escuridao; 0 = desligado
 };
 
 // @bindclass

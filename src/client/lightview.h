@@ -34,6 +34,13 @@ struct TileLight {
     uint8_t color;
 };
 
+// Samera 2026-07-14: fonte de ESCURIDAO (aura do boss nv3). Dentro do raio, o ambiente escurece e
+// as luzes normais (tocha/utevo/itens) sao anuladas com falloff suave. Ver LightView::draw().
+struct DarkSource {
+    Point pos;      // centro em pixels de tela (posicao do boss)
+    float radius;   // raio em TILES
+};
+
 class LightView : public DrawQueueItem
 {
 public:
@@ -45,9 +52,11 @@ public:
 
     inline void addLight(const Point& pos, const Light& light)
     {
-        return addLight(pos, light.color, light.intensity);
+        return addLight(pos, light.color, light.intensity, light.immune);
     }
-    void addLight(const Point& pos, uint8_t color, uint8_t intensity);
+    void addLight(const Point& pos, uint8_t color, uint8_t intensity, bool immune = false);
+    // Samera 2026-07-14: registra uma aura de escuridao centrada em pos (raio em tiles).
+    void addDarkness(const Point& pos, float radiusTiles) { m_darks.push_back(DarkSource{ pos, radiusTiles }); }
     void setFieldBrightness(const Point& pos, size_t start, uint8_t color);
     size_t size() { return m_lights.size(); }
 
@@ -60,6 +69,7 @@ private:
     Color m_globalLight;
     std::vector<Light> m_lights;
     std::vector<TileLight> m_tiles;
+    std::vector<DarkSource> m_darks; // Samera 2026-07-14: auras de escuridao ativas neste frame
 };
 
 #endif

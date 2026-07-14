@@ -121,8 +121,15 @@ void Creature::draw(const Point& dest, bool animate, LightView* lightView)
             light.color = 215;
     }
     
-    if(lightView)
+    if(lightView) {
+        // Samera 2026-07-14: boss com aura de escuridao emana breu REAL no raio (anula tocha/utevo
+        // dos players ali) e a propria luz dele fica imune, pra atravessar o breu que ele cria.
+        if (m_darknessAura > 0.f) {
+            lightView->addDarkness(creatureCenter, m_darknessAura);
+            light.immune = true;
+        }
         lightView->addLight(creatureCenter, light);
+    }
 }
 
 void Creature::drawOutfit(const Rect& destRect, Otc::Direction direction, const Color& color, bool animate, bool ui, bool oldScaling)
@@ -484,13 +491,15 @@ void Creature::updateWalkAnimation(uint8 totalPixelsWalked)
     if (m_outfit.getCategory() != ThingCategoryCreature)
         return;
 
+    // Samera 2026-07-05: animacao de andar 2x (GameFasterAnimations) SO p/ PLAYERS; monstros/NPCs ficam com a normal.
+    bool fastWalk = g_game.getFeature(Otc::GameFasterAnimations) && isPlayer();
     int footAnimPhases = getWalkAnimationPhases() - 1;
     // TODO, should be /2 for <= 810
     uint16 footDelay = getStepDuration(true);
     if (footAnimPhases > 0) {
-        footDelay = ((getStepDuration(true) + 20) / (g_game.getFeature(Otc::GameFasterAnimations) ? footAnimPhases * 2 : footAnimPhases));
+        footDelay = ((getStepDuration(true) + 20) / (fastWalk ? footAnimPhases * 2 : footAnimPhases));
     }
-    if (!g_game.getFeature(Otc::GameFasterAnimations))
+    if (!fastWalk)
         footDelay += 10;
     if (footDelay < 20)
         footDelay = 20;

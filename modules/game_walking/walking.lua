@@ -365,7 +365,7 @@ function walk(dir, ticks)
   removeEvent(autoWalkEvent)
   autoWalkEvent = nil
   local preWalked = false
-  if toTile and toTile:isWalkable() then
+  if toTile and toTile:isWalkable() and not toTile:isBlocking() then -- Samera 2026-06-21: NewWalking nao preve passo em tile solido (mesa/parede)
     if not player:isServerWalking() and not ignoredCanWalk then
       player:preWalk(dir)
       preWalked = true

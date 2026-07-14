@@ -498,6 +498,9 @@ void Client::registerLuaFunctions()
 
     g_lua.registerClass<Creature, Thing>();
     g_lua.bindClassStaticFunction<Creature>("create", []{ return CreaturePtr(new Creature); });
+    // Samera 2026-07-14: aura de escuridao do boss nv3 (raio em tiles; 0 = desliga)
+    g_lua.bindClassMemberFunction<Creature>("setDarknessAura", &Creature::setDarknessAura);
+    g_lua.bindClassMemberFunction<Creature>("getDarknessAura", &Creature::getDarknessAura);
     g_lua.bindClassMemberFunction<Creature>("getId", &Creature::getId);
     g_lua.bindClassMemberFunction<Creature>("getName", &Creature::getName);
     g_lua.bindClassMemberFunction<Creature>("setName", &Creature::setName);
