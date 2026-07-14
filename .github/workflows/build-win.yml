@@ -17,6 +17,25 @@ jobs:
       uses: microsoft/setup-msbuild@v2
       id: setup_msbuild
 
+    # Samera 2026-07-14: o vcpkg pinado (3b3bd42) exige 7zip 21.7.0 e baixa de
+    # https://www.7-zip.org/a/7z2107-extra.7z -> que virou 404 (tiraram a versao antiga do ar),
+    # quebrando o build sozinho. Em vez de bumpar o vcpkg (arrastaria 4 anos de boost/openssl e
+    # provavelmente quebraria o build do OTCv8), pre-semeamos o download: o vcpkg confere o SHA512,
+    # entao pegamos os bytes ORIGINAIS do web.archive.org (hash verificado 648d8949...c848) e
+    # apontamos VCPKG_DOWNLOADS pra ca. Assim ele acha o arquivo e nem tenta a URL morta.
+    - name: Pre-seed 7zip (contorna o 404 do 7-zip.org)
+      shell: pwsh
+      run: |
+        $dl = "${{ runner.workspace }}\vcpkg-downloads"
+        New-Item -ItemType Directory -Force -Path $dl | Out-Null
+        $url = "https://web.archive.org/web/2022id_/https://www.7-zip.org/a/7z2107-extra.7z"
+        Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile "$dl\7z2107-extra.7z"
+        $want = "648d894940bcc29951752d7a8fd18c770ee8d4fd944e17f1a52588e51ca8f58375ba48514538f2e1387786fd812bb86f75fd6bdd0892685cdcafb2989942c848"
+        $got = (Get-FileHash -Algorithm SHA512 "$dl\7z2107-extra.7z").Hash.ToLower()
+        if ($got -ne $want) { Write-Error "sha512 do 7zip nao bate: $got"; exit 1 }
+        Write-Host "7zip pre-semeado OK (sha512 confere)"
+        "VCPKG_DOWNLOADS=$dl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
     - name: Run vcpkg
       uses: lukka/run-vcpkg@v7
       with:
