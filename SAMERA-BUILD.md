@@ -5,6 +5,82 @@ deste fonte. Escrito em 2026-06-19 depois de modernizar o código (de 2023) pro 
 
 ---
 
+## ⚠️ LEIA ISTO ANTES DE BUILDAR (lições caras — 2026-07-14)
+
+**Custo real de ignorar esta seção: 6 builds falhados e ~2h de trabalho jogado fora.**
+Tudo abaixo já estava escrito neste doc — e foi ignorado. **Leia antes de tocar em Actions.**
+
+### 1️⃣ REGRA DE OURO: existe só UM workflow que presta
+
+| Workflow | Arquivo | Status |
+|---|---|---|
+| ✅ **Build Windows Samera** | `build-windows.yml` (id **298791151**) | **USE ESTE.** Histórico 100% sucesso |
+| ❌ Build win (GL only) | `build-win.yml` | **NATIMORTO** — nunca passou. Não use, não conserte |
+| ❌ Build on request / ci-cd / pr-test | outros | não são o caminho do Samera |
+
+O `build-win.yml` aponta pro **vcpkg de 2022 (`3b3bd424`)**, que tem **asset rot**: baixa 7zip/msys2
+de URLs que hoje são **404**, e o vcpkg velho **não enxerga o Visual Studio** do runner atual
+(o `windows-2019` foi aposentado pelo GitHub). **Não tem conserto que valha a pena** — os artefatos
+sumiram da internet (o `libwinpthread-git` não existe nem no web.archive). A modernização já foi
+feita no `build-windows.yml` (vcpkg 2026-06 + overlay do LuaJIT). **Não reinvente.**
+
+### 2️⃣ Se um build falhar, ANTES de debugar: olhe o histórico
+
+Não presuma que "o build quebrou". Descubra **qual workflow já funcionou** e **quando**:
+
+```bash
+TOKEN=$(cat /root/.ghtoken); REPO=cristianwidthauper/otcv8-dev
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://api.github.com/repos/$REPO/actions/runs?per_page=100" \
+ | python3 -c "
+import sys,json
+for r in json.load(sys.stdin)['workflow_runs']:
+    if r.get('conclusion')=='success': print(r['created_at'][:16],'|',r['name'],'|',r['id'])"
+```
+Em 2026-07-14 isso teria respondido em 5 segundos: **"Build Windows Samera", último sucesso 22/jun**.
+O build **não tinha quebrado** — ninguém tinha rodado desde então.
+
+### 3️⃣ Race `git push` → `workflow_dispatch` (queimou 2 builds)
+
+Disparar logo após o push pega a **ref VELHA** — você lê o log de um código que nem subiu, e sai
+"consertando" o que já estava certo. **Espere propagar e valide o `head_sha`:**
+
+```bash
+WANT=$(git rev-parse origin/master)
+# espera a API refletir o push
+for i in $(seq 6); do
+  API=$(curl -s -H "Authorization: Bearer $TOKEN" "https://api.github.com/repos/$REPO/commits/master" \
+        | python3 -c "import sys,json; print(json.load(sys.stdin)['sha'])")
+  [ "$API" = "$WANT" ] && break; sleep 10
+done
+# ... dispatch ... e DEPOIS confirme:
+#   head_sha do run == $WANT   -> senão, NÃO leia o log, é o commit velho
+```
+
+### 4️⃣ Deploy do `.exe` (o updater NÃO troca o exe)
+
+O Windows não deixa o client sobrescrever a si mesmo rodando. Então:
+1. Baixe o artifact **`Download-binaries`** → `otclient_gl.exe`
+2. `cp` pra `aac/updater/otclient_gl.exe` (**backup antes**) — mantém o updater coerente
+3. `cp` pra `aac/downloads/<nome-claro>.exe` → é **esse link** que o Felipe baixa na mão
+4. `chown www-data:www-data` nos dois
+
+⚠️ **Não crie nomes novos de exe sem avisar.** Em 2026-07-14 o Felipe ficou com `samera.exe` (antigo)
+e `samera-escuridao.exe` (novo) na mesma pasta e testou o **errado** — o que invalidou o teste.
+Ou reutilize o mesmo nome, ou diga explicitamente qual rodar.
+
+### 5️⃣ Antes de culpar o `.exe` por um bug de comportamento
+
+Cheque o `features.lua` (`aac/updater/modules/game_features/features.lua`). Muita coisa do C++ é
+**gated por feature** — o código pode estar no exe e **dormindo**. Ex.: `GameFasterAnimations` está
+**desligado** desde 2026-07-05 esperando "um build com creature.cpp que diferencia player/monstro"
+(esse build **existe desde 2026-07-14** — dá pra religar quando quiser).
+
+E lembre: **`git status` no repo** — pode haver fix local **nunca commitado** (logo, nunca buildado).
+Foi o caso do `fastWalk` (2026-07-05 → só entrou no build de 2026-07-14).
+
+---
+
 ## 0. TL;DR (o caminho feliz)
 
 1. Faça seu patch no C++ (em `src/`) e dê push na branch `master` deste fork
@@ -144,6 +220,24 @@ acha o símbolo com endereço logo abaixo do `eip`.
   é via `--overlay-ports`, não manifest override.
 - vcpkg MUITO antigo (~2021, ex commit 3b3bd424) tem **asset rot** (baixa 7zip/msys2 de URLs
   404). Por isso NÃO dá pra simplesmente voltar pro vcpkg antigo — daí o overlay.
+  > **Autópsia (2026-07-14)** — tentei reviver esse vcpkg e mapeei a cascata inteira. Fica aqui
+  > pra ninguém repetir. São 4 paredes, e a última **não tem saída**:
+  > 1. **7zip 21.7.0** → `7-zip.org/a/7z2107-extra.7z` = **404**. *Contornável:* os bytes originais
+  >    estão no web.archive (SHA512 confere) → pré-semear + `VCPKG_DOWNLOADS`.
+  > 2. **pkg-config (MSYS2)** → o `bzip2` chama `vcpkg_fixup_pkgconfig`; os pacotes têm versão
+  >    pinada e o MSYS2 **apagou de todos os 8 mirrors**. O `libwinpthread-git` **não existe nem no
+  >    web.archive** → impossível pré-semear. *Contornável só* pelo escape hatch:
+  >    `vcpkg_find_acquire_program.cmake:533` respeita a env **`PKG_CONFIG`** e dá `return()`.
+  > 3. **Ambiente isolado** → o vcpkg builda ports num ambiente limpo (`docs/users/triplets.md`),
+  >    então `PKG_CONFIG` não chega no portfile. Precisa de **`VCPKG_KEEP_ENV_VARS=PKG_CONFIG`**.
+  > 4. **☠️ PAREDE FINAL** → `openal-soft` usa o generator do VS (os outros 89 usam Ninja). O vcpkg
+  >    velho escolhe **v142 → "Visual Studio 16 2019"**, que **não existe** no runner (GitHub
+  >    aposentou o `windows-2019`). Forçar **v143** via overlay-triplet resulta em
+  >    `Unable to find a valid Visual Studio instance with toolset version v143` — o vcpkg-tool de
+  >    2022 **não enxerga** o VS de 2026. Isso é **código dele**, não configuração. **Sem saída.**
+  >
+  > **Moral:** o caminho certo já está pronto no `build-windows.yml` (vcpkg 2026-06 + overlay do
+  > LuaJIT). Cheguei a considerar "bumpar o vcpkg" como opção arriscada — **já estava feito lá**.
 - Auto-link de libs: NÃO listar libs vcpkg explícitas no projeto (o wildcard cobre); só quebra.
 - Editar o fonte rápido: este repo está clonado em `/root/otcv8-fix` (grep/sed >> API).
 - Build local (VM Windows / Linux gdb) seria 10x mais rápido pra debugar runtime — fica de
