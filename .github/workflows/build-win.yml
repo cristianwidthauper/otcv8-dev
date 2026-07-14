@@ -36,6 +36,20 @@ jobs:
         Write-Host "7zip pre-semeado OK (sha512 confere)"
         "VCPKG_DOWNLOADS=$dl" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
+    # Samera 2026-07-14: o bzip2 chama vcpkg_fixup_pkgconfig -> precisa do pkg-config, que este vcpkg
+    # baixa do MSYS2 com versao PINADA. Esses pacotes foram APAGADOS: repo.msys2.org e os 8 mirrors
+    # dao 404, e o libwinpthread-git sumiu ate do web.archive.org (nao da pra pre-semear).
+    # Escape hatch do proprio vcpkg (scripts/cmake/vcpkg_find_acquire_program.cmake:533): se a env
+    # PKG_CONFIG estiver definida, ele usa ela e da 'return()' ANTES de chamar o vcpkg_acquire_msys.
+    - name: Prover pkg-config (contorna os pacotes MSYS2 apagados)
+      shell: pwsh
+      run: |
+        choco install pkgconfiglite -y --no-progress --allow-empty-checksums
+        $pc = (Get-Command pkg-config.exe -ErrorAction SilentlyContinue).Source
+        if (-not $pc) { Write-Error "pkg-config nao encontrado apos o choco install"; exit 1 }
+        Write-Host "pkg-config em: $pc"
+        "PKG_CONFIG=$pc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
     - name: Run vcpkg
       uses: lukka/run-vcpkg@v7
       with:
