@@ -60,6 +60,7 @@ jobs:
         vcpkgTriplet: x86-windows-static
         vcpkgGitCommitId: 3b3bd424827a1f7f4813216f6b32b6c61e386b2e
         vcpkgArguments: >
+          --overlay-triplets=${{ github.workspace }}/vcpkg-triplets
           boost-iostreams boost-asio boost-beast boost-system boost-variant boost-lockfree boost-process boost-program-options boost-uuid boost-filesystem
           luajit glew physfs openal-soft libogg libvorbis zlib libzip bzip2 openssl
 
